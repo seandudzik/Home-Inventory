@@ -5,14 +5,17 @@ import Observation
 @Observable
 final class AppState {
     var isAuthenticated = false
-    var householdId: String? = nil  // stored as lowercase UUID string
+    var householdId: String? = nil
+    var userId: String? = nil
     var isLoading = true
 
     func initialize() async {
         do {
             let session = try await supabase.auth.session
             isAuthenticated = true
-            await fetchHouseholdId(userId: session.user.id.uuidString.lowercased())
+            let uid = session.user.id.uuidString.lowercased()
+            userId = uid
+            await fetchHouseholdId(userId: uid)
         } catch {
             isAuthenticated = false
         }
@@ -24,11 +27,13 @@ final class AppState {
                 case .signedIn:
                     isAuthenticated = true
                     if let uid = session?.user.id.uuidString.lowercased() {
+                        userId = uid
                         await fetchHouseholdId(userId: uid)
                     }
                 case .signedOut:
                     isAuthenticated = false
                     householdId = nil
+                    userId = nil
                 default:
                     break
                 }
@@ -39,13 +44,16 @@ final class AppState {
     func signIn(email: String, password: String) async throws {
         let session = try await supabase.auth.signIn(email: email, password: password)
         isAuthenticated = true
-        await fetchHouseholdId(userId: session.user.id.uuidString.lowercased())
+        let uid = session.user.id.uuidString.lowercased()
+        userId = uid
+        await fetchHouseholdId(userId: uid)
     }
 
     func signOut() async {
         try? await supabase.auth.signOut()
         isAuthenticated = false
         householdId = nil
+        userId = nil
     }
 
     private func fetchHouseholdId(userId: String) async {

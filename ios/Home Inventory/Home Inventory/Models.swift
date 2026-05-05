@@ -137,6 +137,32 @@ struct ItemRef: Codable {
     let name: String
 }
 
+// MARK: - Attachment
+
+struct ItemAttachment: Codable, Identifiable {
+    let id: UUID
+    let itemId: UUID
+    let storagePath: String
+    let fileName: String
+    let mimeType: String
+    let sizeBytes: Int
+    let isPrimaryImage: Bool
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case itemId = "item_id"
+        case storagePath = "storage_path"
+        case fileName = "file_name"
+        case mimeType = "mime_type"
+        case sizeBytes = "size_bytes"
+        case isPrimaryImage = "is_primary_image"
+        case createdAt = "created_at"
+    }
+
+    var isImage: Bool { mimeType.hasPrefix("image/") }
+}
+
 // MARK: - Chat
 
 struct ChatMessage: Identifiable {

@@ -132,7 +132,7 @@ private struct MaintenanceEventRow: View {
     }
 }
 
-private struct CompleteEventSheet: View {
+struct CompleteEventSheet: View {
     let event: MaintenanceEvent
     let onDone: () async -> Void
     @Environment(\.dismiss) private var dismiss
