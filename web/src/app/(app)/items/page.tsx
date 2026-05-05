@@ -10,7 +10,12 @@ interface RawItem extends Item {
   item_attachments: { id: string; storage_path: string; is_primary_image: boolean; mime_type: string }[];
 }
 
-export default async function ItemsPage() {
+export default async function ItemsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ room?: string; category?: string }>;
+}) {
+  const { room: initialRoom, category: initialCategory } = await searchParams;
   const supabase = await createClient();
   const householdId = await getHouseholdId();
 
@@ -70,6 +75,8 @@ export default async function ItemsPage() {
       rooms={(rooms ?? []) as Room[]}
       categories={(categories ?? []) as Category[]}
       tags={(tags ?? []) as Tag[]}
+      initialRoomFilter={initialRoom ?? ""}
+      initialCategoryFilter={initialCategory ?? ""}
     />
   );
 }

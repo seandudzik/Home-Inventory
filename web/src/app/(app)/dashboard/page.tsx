@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getHouseholdId } from "@/lib/household";
-import CategoryPieChart from "@/components/CategoryPieChart";
+import PieChart from "@/components/PieChart";
 
 function StatCard({ label, value, href, accent }: { label: string; value: number; href?: string; accent?: "red" | "amber" }) {
   const valueClass =
@@ -69,13 +69,15 @@ export default async function DashboardPage() {
   // Fetch household item IDs for scoping event queries
   const { data: householdItems } = await supabase
     .from("items")
-    .select("id, name, warranty_expires_at, rooms(name), categories(name, color)")
+    .select("id, name, warranty_expires_at, category_id, room_id, rooms(name), categories(name, color)")
     .eq("household_id", householdId)
     .order("name") as {
       data: {
         id: string;
         name: string;
         warranty_expires_at: string | null;
+        category_id: string | null;
+        room_id: string | null;
         rooms: { name: string } | null;
         categories: { name: string; color: string | null } | null;
       }[] | null
@@ -148,18 +150,36 @@ export default async function DashboardPage() {
   const maxRoomCount = itemsByRoom[0]?.count ?? 1;
 
   // Items by category for pie chart
-  const categoryMap = new Map<string, { name: string; color: string | null; count: number }>();
+  const categoryMap = new Map<string, { name: string; color: string | null; count: number; id: string | null }>();
   for (const item of items) {
     const cat = item.categories as unknown as { name: string; color: string | null } | null;
-    const key = cat?.name ?? "Uncategorized";
+    const key = item.category_id ?? "__none__";
     const existing = categoryMap.get(key);
     if (existing) {
       existing.count++;
     } else {
-      categoryMap.set(key, { name: key, color: cat?.color ?? null, count: 1 });
+      categoryMap.set(key, { name: cat?.name ?? "Uncategorized", color: cat?.color ?? null, count: 1, id: item.category_id ?? null });
     }
   }
-  const categorySlices = Array.from(categoryMap.values()).sort((a, b) => b.count - a.count);
+  const categorySlices = Array.from(categoryMap.values())
+    .sort((a, b) => b.count - a.count)
+    .map((s) => ({ ...s, href: s.id ? `/items?category=${s.id}` : `/items` }));
+
+  // Items by room for pie chart
+  const roomMap = new Map<string, { name: string; count: number; id: string | null }>();
+  for (const item of items) {
+    const key = item.room_id ?? "__none__";
+    const existing = roomMap.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      const roomName = (item.rooms as unknown as { name: string } | null)?.name ?? "No Room";
+      roomMap.set(key, { name: roomName, count: 1, id: item.room_id ?? null });
+    }
+  }
+  const roomSlices = Array.from(roomMap.values())
+    .sort((a, b) => b.count - a.count)
+    .map((s) => ({ ...s, color: null, href: s.id ? `/items?room=${s.id}` : `/items` }));
 
   function formatDate(dateStr: string) {
     return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
@@ -204,8 +224,11 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Category pie chart */}
-      <CategoryPieChart slices={categorySlices} />
+      {/* Pie charts */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <PieChart title="Items by Category" slices={categorySlices} />
+        <PieChart title="Items by Room" slices={roomSlices} />
+      </div>
 
       {/* Maintenance columns */}
       <div className="grid gap-6 sm:grid-cols-2">

@@ -22,6 +22,8 @@ interface ItemsClientProps {
   rooms: Room[];
   categories: Category[];
   tags: Tag[];
+  initialRoomFilter?: string;
+  initialCategoryFilter?: string;
 }
 
 function warrantyStatus(date: string | null): "expired" | "soon" | "ok" | null {
@@ -269,12 +271,28 @@ function ItemForm({ rooms, categories, tags: initialTags, onSuccess, onCancel }:
   );
 }
 
-export function ItemsClient({ items, rooms, categories, tags }: ItemsClientProps) {
+export function ItemsClient({ items, rooms, categories, tags, initialRoomFilter = "", initialCategoryFilter = "" }: ItemsClientProps) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState("");
-  const [roomFilter, setRoomFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState(initialRoomFilter);
+  const [categoryFilter, setCategoryFilter] = useState(initialCategoryFilter);
+
+  function applyRoomFilter(value: string) {
+    setRoomFilter(value);
+    const params = new URLSearchParams();
+    if (value) params.set("room", value);
+    if (categoryFilter) params.set("category", categoryFilter);
+    router.replace(`/items${params.size ? `?${params}` : ""}`);
+  }
+
+  function applyCategoryFilter(value: string) {
+    setCategoryFilter(value);
+    const params = new URLSearchParams();
+    if (roomFilter) params.set("room", roomFilter);
+    if (value) params.set("category", value);
+    router.replace(`/items${params.size ? `?${params}` : ""}`);
+  }
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -317,7 +335,7 @@ export function ItemsClient({ items, rooms, categories, tags }: ItemsClientProps
         />
         <select
           value={roomFilter}
-          onChange={(e) => setRoomFilter(e.target.value)}
+          onChange={(e) => applyRoomFilter(e.target.value)}
           className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
         >
           <option value="">All rooms</option>
@@ -325,7 +343,7 @@ export function ItemsClient({ items, rooms, categories, tags }: ItemsClientProps
         </select>
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          onChange={(e) => applyCategoryFilter(e.target.value)}
           className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
         >
           <option value="">All categories</option>
@@ -333,7 +351,7 @@ export function ItemsClient({ items, rooms, categories, tags }: ItemsClientProps
         </select>
         {(search || roomFilter || categoryFilter) && (
           <button
-            onClick={() => { setSearch(""); setRoomFilter(""); setCategoryFilter(""); }}
+            onClick={() => { setSearch(""); applyRoomFilter(""); applyCategoryFilter(""); }}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             Clear

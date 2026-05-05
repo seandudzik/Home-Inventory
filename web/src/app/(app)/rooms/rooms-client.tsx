@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Modal } from "@/components/ui/modal";
 import { createRoom, updateRoom, deleteRoom } from "@/actions/rooms";
 import type { Room } from "@/types/database";
@@ -193,11 +194,22 @@ export function RoomsClient({ rooms }: RoomsClientProps) {
                 <span className="text-2xl leading-none">{room.icon || "🏠"}</span>
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{room.name}</p>
-                  <p className="mt-0.5 text-xs text-zinc-400">
-                    {[floorLabel(room.floor), `${room.item_count} item${room.item_count !== 1 ? "s" : ""}`]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-zinc-400">
+                    <span>
+                      {[floorLabel(room.floor), `${room.item_count} item${room.item_count !== 1 ? "s" : ""}`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                    {room.item_count > 0 && (
+                      <Link
+                        href={`/items?room=${room.id}`}
+                        className="font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        View items →
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex shrink-0 gap-1">

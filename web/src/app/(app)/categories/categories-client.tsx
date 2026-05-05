@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Modal } from "@/components/ui/modal";
 import { createCategory, updateCategory, deleteCategory } from "@/actions/categories";
 import type { Category } from "@/types/database";
@@ -191,14 +192,25 @@ function CategoryRow({ node, depth, onEdit, onDelete }: CategoryRowProps) {
           <span className="text-base leading-none">{node.icon || "📁"}</span>
           <div>
             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{node.name}</p>
-            <p className="text-xs text-zinc-400">
-              {[
-                node.children.length > 0 && `${node.children.length} sub-categor${node.children.length !== 1 ? "ies" : "y"}`,
-                `${node.item_count} item${node.item_count !== 1 ? "s" : ""}`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <span>
+                {[
+                  node.children.length > 0 && `${node.children.length} sub-categor${node.children.length !== 1 ? "ies" : "y"}`,
+                  `${node.item_count} item${node.item_count !== 1 ? "s" : ""}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+              {node.item_count > 0 && (
+                <Link
+                  href={`/items?category=${node.id}`}
+                  className="font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  View items →
+                </Link>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-1">
