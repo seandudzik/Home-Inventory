@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getHouseholdId } from "@/lib/household";
+import CategoryPieChart from "@/components/CategoryPieChart";
 
 function StatCard({ label, value, href, accent }: { label: string; value: number; href?: string; accent?: "red" | "amber" }) {
   const valueClass =
@@ -146,6 +147,20 @@ export default async function DashboardPage() {
 
   const maxRoomCount = itemsByRoom[0]?.count ?? 1;
 
+  // Items by category for pie chart
+  const categoryMap = new Map<string, { name: string; color: string | null; count: number }>();
+  for (const item of items) {
+    const cat = item.categories as unknown as { name: string; color: string | null } | null;
+    const key = cat?.name ?? "Uncategorized";
+    const existing = categoryMap.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      categoryMap.set(key, { name: key, color: cat?.color ?? null, count: 1 });
+    }
+  }
+  const categorySlices = Array.from(categoryMap.values()).sort((a, b) => b.count - a.count);
+
   function formatDate(dateStr: string) {
     return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
       month: "short",
@@ -188,6 +203,9 @@ export default async function DashboardPage() {
           accent={upcomingList.length > 0 ? "amber" : undefined}
         />
       </div>
+
+      {/* Category pie chart */}
+      <CategoryPieChart slices={categorySlices} />
 
       {/* Maintenance columns */}
       <div className="grid gap-6 sm:grid-cols-2">
